@@ -69,12 +69,14 @@ with main_container:
             assistant_greeting = get_full_response(INITIAL_GREETING_PROMPT)
             st.session_state.chat_history.append({"role": "assistant", "content": assistant_greeting})
         
-        # Display chat messages
+        # Display chat messages with proper formatting
         for message in st.session_state.chat_history:
             if message["role"] == "user":
-                st.chat_message("user").write(message["content"])
+                st.chat_message("user").markdown(message["content"])
             else:
-                st.chat_message("assistant", avatar="👨‍💼").write(message["content"])
+                # Use markdown for better formatting and word wrapping
+                container = st.chat_message("assistant", avatar="👨‍💼")
+                container.markdown(message["content"], unsafe_allow_html=False)
     
     # User input section
     input_container = st.container()
@@ -117,19 +119,7 @@ with main_container:
                         else:
                             # All information collected
                             st.session_state.collection_complete = True
-                            confirmation_message = f"""
-                            Thank you for providing your information. Here's what I have:
-                            
-                            - Name: {st.session_state.candidate_info['name']}
-                            - Email: {st.session_state.candidate_info['email']}
-                            - Phone: {st.session_state.candidate_info['phone']}
-                            - Experience: {st.session_state.candidate_info['experience']} years
-                            - Position: {st.session_state.candidate_info['position']}
-                            - Location: {st.session_state.candidate_info['location']}
-                            - Tech Stack: {st.session_state.candidate_info['tech_stack']}
-                            
-                            Now, I'll ask you a few technical questions based on your tech stack to understand your expertise better.
-                            """
+                            confirmation_message = f"Thank you for your information. I have: Name: {st.session_state.candidate_info['name']}, Email: {st.session_state.candidate_info['email']}, Phone: {st.session_state.candidate_info['phone']}, Experience: {st.session_state.candidate_info['experience']} years, Position: {st.session_state.candidate_info['position']}, Location: {st.session_state.candidate_info['location']}, Tech Stack: {st.session_state.candidate_info['tech_stack']}. Now I'll ask a few technical questions."
                             st.session_state.chat_history.append({"role": "assistant", "content": confirmation_message})
                             
                             # Generate technical questions
@@ -189,6 +179,6 @@ with main_container:
 # Footer section
 st.markdown("""
 <div style='position: fixed; bottom: 0; left: 0; width: 100%; background-color: #0e1117; padding: 10px; text-align: center; font-size: 12px; color: #7f7f7f;'>
-    Created by Goddati bhavyasri
+    Created by Goddati Bhavyasri
 </div>
 """, unsafe_allow_html=True)

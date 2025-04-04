@@ -54,14 +54,25 @@ def get_full_response(prompt):
         response = client.chat.completions.create(
             model="llama3-70b-8192",  # Use Llama 3 model
             messages=[
-                {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 50 words. Be direct, clear, and professional."},
+                {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=600,
+            max_tokens=300,  # Reduced token count for shorter responses
         )
         
-        return response.choices[0].message.content
+        # Format response to ensure it fits within screen
+        content = response.choices[0].message.content
+        
+        # Break very long words if necessary (over 40 chars)
+        words = content.split()
+        for i, word in enumerate(words):
+            if len(word) > 40:
+                # Insert a zero-width space every 40 characters for long words
+                words[i] = "".join([word[j:j+40] + "\u200B" for j in range(0, len(word), 40)])
+        
+        formatted_content = " ".join(words)
+        return formatted_content
     except Exception as e:
         # Handle API errors
         return "I'm having trouble connecting. Please try again in a moment."

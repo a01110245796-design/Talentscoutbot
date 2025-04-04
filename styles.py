@@ -40,6 +40,24 @@ def apply_custom_styles():
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 0.5rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    /* Ensure chat messages wrap properly */
+    .stChatMessage {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        width: 100%;
+        max-width: 800px;
+    }
+    
+    /* Style all messages for better readability */
+    .stChatMessage p {
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
     }
     
     /* Accent colors for highlights */
