@@ -1,0 +1,93 @@
+Prompt:
+"Create a professional, dark-themed AI-powered hiring assistant chatbot for 'TalentScout' using Streamlit or Gradio. The chatbot should assist in initial candidate screening by collecting essential information and generating technical questions based on the candidate’s declared tech stack. The UI should be sleek and intuitive, ensuring a seamless user experience. Implement the following features:"
+
+User Interface (UI) Requirements:
+Dark Mode: A professional, black-themed interface with contrasting white/light-gray text for readability.
+
+Modern Design: Sleek, minimalistic UI with soft neon or accent colors for highlights.
+
+Interactive Elements: Use collapsible sections, progress indicators, and tooltips for better user guidance.
+
+Custom Styling: Enhance visual appeal with CSS customization in Streamlit/Gradio.
+
+Chatbot Functionalities:
+Greeting & Introduction: Starts with a friendly, professional greeting explaining its purpose.
+
+Information Collection: Captures essential candidate details:
+
+Full Name
+
+Email Address
+
+Phone Number
+
+Years of Experience
+
+Desired Position(s)
+
+Current Location
+
+Tech Stack (programming languages, frameworks, databases, tools)
+
+Dynamic Technical Question Generation:
+
+Generates 3-5 relevant technical questions tailored to the candidate’s tech stack.
+
+Ensures the questions match the declared proficiency level.
+
+Supports multiple programming languages and frameworks dynamically.
+
+Context Handling:
+
+Maintains conversation flow for coherent, context-aware interactions.
+
+Allows follow-up questions and clarifications.
+
+Fallback Mechanism:
+
+Provides intelligent responses for unexpected inputs.
+
+Ensures chatbot remains within its defined scope.
+
+Conversation End & Next Steps:
+
+Gracefully concludes by thanking the candidate.
+
+Provides information on the next steps in the hiring process.
+
+Advanced Features (Bonus):
+Sentiment Analysis: Detect candidate emotions during interaction.
+
+Multilingual Support: Enable interaction in multiple languages.
+
+Personalized Responses: Remember candidate details for a customized experience.
+
+Performance Optimization: Ensure fast response times and smooth interaction.
+
+Technical Requirements:
+Programming Language: Python
+
+Libraries:
+
+Streamlit/Gradio for UI
+
+OpenAI GPT-4 or equivalent LLM for chatbot responses
+
+Deployment:
+
+Local deployment is acceptable.
+
+Bonus: Deploy on AWS/GCP and provide a live demo link.
+
+Data Handling:
+
+Use simulated/anonymized data.
+
+Ensure compliance with GDPR and privacy best practices.
+
+Deliverables:
+Source Code: Well-documented repository (GitHub/ZIP).
+
+README Documentation: Clear setup, usage guide, and prompt design explanation.
+
+Demo Video: Showcase chatbot interaction (Loom or equivalent).
