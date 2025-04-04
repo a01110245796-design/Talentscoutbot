@@ -47,10 +47,12 @@ if "current_field" not in st.session_state:
     st.session_state.current_field = "name"
 
 # Header section with logo
+st.markdown("<div class='header-row'></div>", unsafe_allow_html=True)
 try:
-    col1, col2 = st.columns([1, 5])
+    col1, col2 = st.columns([1, 4])
     with col1:
-        st.image("assets/logo.svg", width=100)
+        # Add padding and use larger image for better quality
+        st.image("assets/logo.jpg", width=150)
     with col2:
         st.title("TalentScout AI Hiring Assistant")
         st.subheader("Initial Candidate Screening")

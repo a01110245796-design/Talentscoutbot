@@ -65,6 +65,23 @@ def apply_custom_styles():
         color: #60a5fa;
     }
     
+    /* Header logo styling */
+    .element-container:has(img) {
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Style for the header row */
+    .header-row {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #374151;
+        margin-bottom: 20px;
+    }
+    
     .highlight {
         color: #60a5fa;
         font-weight: bold;
