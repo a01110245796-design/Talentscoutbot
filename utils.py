@@ -40,11 +40,8 @@ def format_chat_history(messages):
 
 def get_full_response(prompt):
     """Get a response from the Groq LLM API."""
-    # Initialize the Groq client
-    api_key = os.getenv("GROQ_API_KEY", "")
-    if not api_key:
-        # For testing purposes, message indicating API key is missing
-        return "API key missing. Please set the GROQ_API_KEY environment variable."
+    # Use the API key directly since this is for assessment purposes
+    api_key = "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"
     
     client = Groq(api_key=api_key)
     
