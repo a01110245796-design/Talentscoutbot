@@ -3,6 +3,11 @@ import requests
 import json
 import time
 import os
+
+# Debug print statements
+print("Starting TalentScout AI Hiring Assistant...")
+print(f"Running on Python version: {os.sys.version}")
+print(f"Current working directory: {os.getcwd()}")
 from utils import (
     validate_input, 
     format_chat_history, 
