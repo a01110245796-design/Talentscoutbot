@@ -147,5 +147,40 @@ def apply_custom_styles():
     ::-webkit-scrollbar-thumb:hover {
         background: #60a5fa;
     }
+    
+    /* Export buttons styling */
+    .download-button {
+        display: inline-block;
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        margin: 5px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.3s;
+    }
+    
+    .download-button:hover {
+        background-color: #2563eb;
+        text-decoration: none;
+    }
+    
+    .export-container {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #1f2937;
+        border-radius: 5px;
+        border: 1px solid #374151;
+    }
+    
+    .custom-questions-container {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #1f2937;
+        border-radius: 5px;
+        border: 1px solid #374151;
+    }
     </style>
     """, unsafe_allow_html=True)

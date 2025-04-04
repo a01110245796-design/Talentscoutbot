@@ -1,7 +1,11 @@
 import re
 import os
 import json
+import base64
+import csv
 import requests
+from io import StringIO
+from datetime import datetime
 from groq import Groq
 
 def validate_input(field, value):
@@ -76,3 +80,96 @@ def get_full_response(prompt):
     except Exception as e:
         # Handle API errors
         return "I'm having trouble connecting. Please try again in a moment."
+
+def export_chat_history_to_csv(chat_history, candidate_info):
+    """Export the chat history to CSV format."""
+    # Create a StringIO object to store CSV data
+    csv_string = StringIO()
+    writer = csv.writer(csv_string)
+    
+    # Write the header
+    writer.writerow(['Time', 'Role', 'Content'])
+    
+    # Write the candidate info as the first entry
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    candidate_summary = f"Candidate: {candidate_info.get('name', 'N/A')}\n"
+    candidate_summary += f"Email: {candidate_info.get('email', 'N/A')}\n"
+    candidate_summary += f"Phone: {candidate_info.get('phone', 'N/A')}\n"
+    candidate_summary += f"Experience: {candidate_info.get('experience', 'N/A')} years\n"
+    candidate_summary += f"Position: {candidate_info.get('position', 'N/A')}\n"
+    candidate_summary += f"Location: {candidate_info.get('location', 'N/A')}\n"
+    candidate_summary += f"Tech Stack: {candidate_info.get('tech_stack', 'N/A')}"
+    
+    writer.writerow([timestamp, 'System', candidate_summary])
+    
+    # Write each chat message with a timestamp
+    for message in chat_history:
+        writer.writerow([timestamp, message["role"].capitalize(), message["content"]])
+    
+    # Get the CSV data as a string
+    csv_data = csv_string.getvalue()
+    csv_string.close()
+    
+    # Encode as base64 for download link
+    b64 = base64.b64encode(csv_data.encode()).decode()
+    
+    # Create a download link
+    filename = f"talentscout_interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    href = f'<a download="{filename}" href="data:text/csv;base64,{b64}" class="download-button">Download Interview (CSV)</a>'
+    
+    return href
+
+def export_chat_history_to_txt(chat_history, candidate_info):
+    """Export the chat history to text format."""
+    # Create a string to store the text data
+    text_content = f"TalentScout AI Interview - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+    
+    # Add the candidate info
+    text_content += "CANDIDATE INFORMATION\n"
+    text_content += "=====================\n"
+    text_content += f"Name: {candidate_info.get('name', 'N/A')}\n"
+    text_content += f"Email: {candidate_info.get('email', 'N/A')}\n"
+    text_content += f"Phone: {candidate_info.get('phone', 'N/A')}\n"
+    text_content += f"Experience: {candidate_info.get('experience', 'N/A')} years\n"
+    text_content += f"Position: {candidate_info.get('position', 'N/A')}\n"
+    text_content += f"Location: {candidate_info.get('location', 'N/A')}\n"
+    text_content += f"Tech Stack: {candidate_info.get('tech_stack', 'N/A')}\n\n"
+    
+    # Add the interview conversation
+    text_content += "INTERVIEW TRANSCRIPT\n"
+    text_content += "===================\n\n"
+    
+    for message in chat_history:
+        role = "TalentScout AI:" if message["role"] == "assistant" else f"{candidate_info.get('name', 'Candidate')}:"
+        text_content += f"{role}\n{message['content']}\n\n"
+    
+    # Encode as base64 for download link
+    b64 = base64.b64encode(text_content.encode()).decode()
+    
+    # Create a download link
+    filename = f"talentscout_interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    href = f'<a download="{filename}" href="data:text/plain;base64,{b64}" class="download-button">Download Interview (Text)</a>'
+    
+    return href
+
+def generate_custom_interview_questions(skills, experience_level, position):
+    """Generate custom interview questions based on candidate skills."""
+    # Prepare the prompt for the AI to generate questions
+    prompt = f"""
+    Generate 5 professional interview questions for a {position} candidate with {experience_level} years of experience who has the following skills: {skills}.
+    
+    The questions should:
+    1. Be challenging but appropriate for their experience level
+    2. Include at least one behavioral question related to their skills
+    3. Include at least one technical question specific to their technology stack
+    4. Include at least one question about problem-solving in their domain
+    5. Be concise and clear
+    
+    Format each question as a numbered list item, starting with "Question 1:" etc.
+    Do not include answers to the questions. Just list the 5 questions.
+    """
+    
+    try:
+        return get_full_response(prompt)
+    except Exception as e:
+        return "Unable to generate custom interview questions at this time. Please try again later."

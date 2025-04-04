@@ -3,7 +3,14 @@ import requests
 import json
 import time
 import os
-from utils import validate_input, format_chat_history, get_full_response
+from utils import (
+    validate_input, 
+    format_chat_history, 
+    get_full_response, 
+    export_chat_history_to_csv, 
+    export_chat_history_to_txt,
+    generate_custom_interview_questions
+)
 from styles import apply_custom_styles
 from prompts import (
     INITIAL_GREETING_PROMPT,
@@ -45,6 +52,10 @@ if "conversation_ended" not in st.session_state:
     st.session_state.conversation_ended = False
 if "current_field" not in st.session_state:
     st.session_state.current_field = "name"
+if "custom_questions" not in st.session_state:
+    st.session_state.custom_questions = ""
+if "custom_questions_generated" not in st.session_state:
+    st.session_state.custom_questions_generated = False
 
 # Header section with logo
 st.markdown("<div class='header-row'></div>", unsafe_allow_html=True)
@@ -86,6 +97,62 @@ with main_container:
         # Process different stages of conversation
         if st.session_state.conversation_ended:
             st.info("Thank you for completing the initial screening. Our hiring team will review your information and contact you soon!")
+            
+            # Export options for completed conversations
+            export_container = st.container()
+            with export_container:
+                st.markdown("<div class='export-container'>", unsafe_allow_html=True)
+                st.subheader("Interview Transcript Export")
+                st.markdown("Download the interview transcript in your preferred format:")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    # Export to CSV
+                    csv_link = export_chat_history_to_csv(st.session_state.chat_history, st.session_state.candidate_info)
+                    st.markdown(csv_link, unsafe_allow_html=True)
+                
+                with col2:
+                    # Export to TXT
+                    txt_link = export_chat_history_to_txt(st.session_state.chat_history, st.session_state.candidate_info)
+                    st.markdown(txt_link, unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                # Generate custom interview questions based on candidate's skills
+                if st.session_state.collection_complete and 'tech_stack' in st.session_state.candidate_info:
+                    st.markdown("<div class='custom-questions-container'>", unsafe_allow_html=True)
+                    st.subheader("AI-Powered Interview Questions Generator")
+                    
+                    # Display existing questions if already generated
+                    if st.session_state.custom_questions_generated:
+                        st.markdown("### Recommended Interview Questions")
+                        st.markdown(st.session_state.custom_questions)
+                        
+                        # Option to regenerate
+                        if st.button("Generate New Questions"):
+                            st.session_state.custom_questions_generated = False
+                            st.rerun()
+                    else:
+                        # Button to generate questions
+                        generate_btn = st.button("Generate Custom Interview Questions")
+                        if generate_btn:
+                            with st.spinner("Generating custom interview questions based on candidate's skills..."):
+                                skills = st.session_state.candidate_info.get('tech_stack', '')
+                                experience = st.session_state.candidate_info.get('experience', '1-2')
+                                position = st.session_state.candidate_info.get('position', 'Software Developer')
+                                
+                                # Generate questions
+                                questions = generate_custom_interview_questions(skills, experience, position)
+                                
+                                # Store in session state
+                                st.session_state.custom_questions = questions
+                                st.session_state.custom_questions_generated = True
+                                
+                                # Display the questions
+                                st.markdown("### Recommended Interview Questions")
+                                st.markdown(questions)
+                    
+                    st.markdown("</div>", unsafe_allow_html=True)
         else:
             user_input = st.chat_input("Type your message here...", disabled=st.session_state.conversation_ended)
             
