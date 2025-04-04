@@ -44,12 +44,24 @@ def format_chat_history(messages):
 
 def get_full_response(prompt):
     """Get a response from the Groq LLM API."""
-    # Get API key from environment variables
+    # Get API key from environment variables or Streamlit secrets if deployed
+    api_key = None
+    
+    # Try to get from environment variables first
     api_key = os.environ.get("GROQ_API_KEY")
+    
+    # If not found and in Streamlit Cloud environment, try to get from st.secrets
+    if not api_key:
+        try:
+            import streamlit as st
+            if hasattr(st, 'secrets') and 'GROQ_API_KEY' in st.secrets:
+                api_key = st.secrets["GROQ_API_KEY"]
+        except:
+            pass
     
     # Check if API key exists
     if not api_key:
-        return "API key not found. Please set the GROQ_API_KEY environment variable."
+        return "API key not found. Please set the GROQ_API_KEY in environment variables or Streamlit secrets."
     
     client = Groq(api_key=api_key)
     

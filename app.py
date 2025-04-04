@@ -245,9 +245,9 @@ with main_container:
                 # Rerun to update UI
                 st.rerun()
 
-# Footer section
+# Footer section with creator's full name
 st.markdown("""
-<div style='position: fixed; bottom: 0; left: 0; width: 100%; background-color: #0e1117; padding: 10px; text-align: center; font-size: 12px; color: #7f7f7f;'>
-    Created by Goddati Bhavyasri
+<div style='position: fixed; bottom: 0; left: 0; width: 100%; background-color: #0e1117; padding: 10px; text-align: center; font-size: 14px; color: #7f7f7f; border-top: 1px solid #2e3440;'>
+    Created by <span style='color: #60a5fa;'>Goddati Bhavyasri</span>
 </div>
 """, unsafe_allow_html=True)
