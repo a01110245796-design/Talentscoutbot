@@ -17,7 +17,7 @@ from prompts import (
 st.set_page_config(
     page_title="TalentScout AI Hiring Assistant",
     page_icon="👨‍💼",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -47,12 +47,16 @@ if "current_field" not in st.session_state:
     st.session_state.current_field = "name"
 
 # Header section with logo
-col1, col2 = st.columns([1, 5])
-with col1:
-    st.image("assets/logo.svg", width=100)
-with col2:
+try:
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.image("assets/logo.svg", width=100)
+    with col2:
+        st.title("TalentScout AI Hiring Assistant")
+        st.subheader("Initial Candidate Screening")
+except Exception as e:
     st.title("TalentScout AI Hiring Assistant")
-    st.subheader("Let me help you with your initial screening")
+    st.subheader("Initial Candidate Screening")
 
 # Main app container
 main_container = st.container()

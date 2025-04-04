@@ -40,8 +40,12 @@ def format_chat_history(messages):
 
 def get_full_response(prompt):
     """Get a response from the Groq LLM API."""
-    # Use the API key directly since this is for assessment purposes
-    api_key = "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"
+    # Get API key from environment variables
+    api_key = os.environ.get("GROQ_API_KEY")
+    
+    # Check if API key exists
+    if not api_key:
+        return "API key not found. Please set the GROQ_API_KEY environment variable."
     
     client = Groq(api_key=api_key)
     
@@ -50,14 +54,14 @@ def get_full_response(prompt):
         response = client.chat.completions.create(
             model="llama3-70b-8192",  # Use Llama 3 model
             messages=[
-                {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. You're helpful, informative, and focused on collecting candidate information and assessing their technical skills."},
+                {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 50 words. Be direct, clear, and professional."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1000,
+            max_tokens=600,
         )
         
         return response.choices[0].message.content
     except Exception as e:
         # Handle API errors
-        return f"I'm having trouble connecting to my knowledge base. Please try again in a moment. Technical details: {str(e)}"
+        return "I'm having trouble connecting. Please try again in a moment."
