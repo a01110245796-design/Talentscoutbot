@@ -56,16 +56,17 @@ def get_full_response(prompt):
             import streamlit as st
             if hasattr(st, 'secrets') and 'GROQ_API_KEY' in st.secrets:
                 api_key = st.secrets["GROQ_API_KEY"]
-        except:
-            pass
+        except Exception as e:
+            print(f"Error accessing Streamlit secrets: {str(e)}")
     
     # Check if API key exists
     if not api_key:
-        return "API key not found. Please set the GROQ_API_KEY in environment variables or Streamlit secrets."
-    
-    client = Groq(api_key=api_key)
+        print("API key not found. Please set the GROQ_API_KEY in environment variables or Streamlit secrets.")
+        return "I'm unable to respond at the moment. Please ensure the API key is configured correctly."
     
     try:
+        client = Groq(api_key=api_key)
+        
         # Call Groq API
         response = client.chat.completions.create(
             model="llama3-70b-8192",  # Use Llama 3 model

@@ -1,0 +1,79 @@
+
+[     UTC     ] Logs for talentscoutbot-9ivnkahipyhvrayvslvmwa.streamlit.app/
+────────────────────────────────────────────────────────────────────────────────────────
+[15:52:19] 🚀 Starting up repository: 'talentscoutbot', branch: 'main', main module: 'app.py'
+[15:52:19] 🐙 Cloning repository...
+[15:52:20] 🐙 Cloning into '/mount/src/talentscoutbot'...
+
+[15:52:20] 🐙 Cloned repository!
+[15:52:20] 🐙 Pulling code changes from Github...
+[15:52:20] 📦 Processing dependencies...
+Prepared 48 packages in 1.95s
+Installed 48 packages in 105ms
+ + altair==5.5.0
+ + annotated-types==0.7.0
+ + anyio==4.9.0
+ + attrs==25.3.0
+ + blinker==1.9.0
+ + cachetools==5.5.2
+ + certifi==2025.1.31
+ + charset-normalizer==3.4.1
+ + click==8.1.8
+ + distro==1.9.0
+ + gitdb==4.0.12
+ + gitpython==3.1.44
+ + groq==0.22.0
+ + h11==0.14.0
+ + httpcore==1.0.7
+ + httpx==0.28.1
+ + idna==3.10
+ + jinja2==3.1.6
+ + jsonschema==4.23.0
+ + jsonschema-specifications==2024.10.1
+ + markupsafe==3.0.2
+ + narwhals==1.33.0
+ + numpy==2.2.4
+ + packaging==24.2
+ + pandas==2.2.3
+ + pillow==11.1.0
+ + protobuf==5.29.4
+ + pyarrow==19.0.1
+ + pydantic==2.11.2
+ + pydantic-core==2.33.1
+ + pydeck==0.9.1
+ + python-dateutil==2.9.0.post0
+ + pytz==2025.2
+ + referencing==0.36.2
+ + requests==2.32.3
+ + rpds-py==0.24.0
+ + [2025-04-04 15:52:23.233075] six==1.17.0
+ + smmap==5.0.2
+ + sniffio==1.3.1
+ + streamlit==1.44.1
+ + tenacity==9.1.2
+ + [2025-04-04 15:52:23.233378] toml==0.10.2
+ + tornado==6.4.2
+ + typing-extensions==4.13.1
+ + typing-inspection==0.4.0
+ +[2025-04-04 15:52:23.233590]  tzdata==2025.2
+ + urllib3==2.3.0
+ + watchdog==6.0.0
+[15:52:23] 🐍 Python dependencies were installed from /mount/src/talentscoutbot/uv.lock using uv-sync.
+[15:52:23] 📦 WARN: More than one requirements file detected in the repository. Available options: uv-sync /mount/src/talentscoutbot/uv.lock, poetry /mount/src/talentscoutbot/pyproject.toml. Used: uv-sync with /mount/src/talentscoutbot/uv.lock
+Check if streamlit is installed
+Streamlit is already installed
+[15:52:25] 📦 Processed dependencies!
+
+
+
+[15:52:29] ❗️ The service has encountered an error while checking the health of the Streamlit app: Get "http://localhost:8501/healthz": dial tcp 127.0.0.1:8501: connect: connection refused
+[15:59:20] 🐙 Pulling code changes from Github...
+2025-04-04 15:59:20.733 An update to the [server] config option section was detected. To have these changes be reflected, please restart streamlit.
+[15:59:20] 📦 Processing dependencies...
+[15:59:20] 📦 Processed dependencies!
+  Stopping...
+
+
+
+[15:59:24] 🔄 Updated app!
+[15:59:24] ❗️ The service has encountered an error while checking the health of the Streamlit app: Get "http://localhost:8501/healthz": dial tcp 127.0.0.1:8501: connect: connection refused
