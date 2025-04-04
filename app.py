@@ -83,9 +83,11 @@ with main_container:
     chat_container = st.container()
     with chat_container:
         if not st.session_state.chat_history:
-            # Initialize with greeting
-            assistant_greeting = get_full_response(INITIAL_GREETING_PROMPT)
-            st.session_state.chat_history.append({"role": "assistant", "content": assistant_greeting})
+            # Use a static greeting to avoid API call on initial load
+            static_greeting = "Welcome to TalentScout AI! I'm your hiring assistant, here to help with the initial screening process. To get started, could you please tell me your full name?"
+            st.session_state.chat_history.append({"role": "assistant", "content": static_greeting})
+            # Log a message to help with debugging
+            print("Initialized chat with static greeting to avoid initial API call")
         
         # Display chat messages with proper formatting
         for message in st.session_state.chat_history:
@@ -202,7 +204,48 @@ with main_container:
                             prompt = TECH_QUESTIONS_PROMPT.format(tech_stack=tech_stack, experience=experience)
                             
                             with st.spinner("Generating technical questions based on your profile..."):
-                                questions = get_full_response(prompt)
+                                try:
+                                    questions = get_full_response(prompt)
+                                    # Check if we got the error message
+                                    if "API key" in questions:
+                                        # Fallback to static questions
+                                        print("Using fallback static questions due to API issues")
+                                        skills = tech_stack.lower()
+                                        if "python" in skills:
+                                            questions = """
+                                            1. Explain Python's GIL and its impact on multithreaded applications.
+                                            2. How would you optimize a slow-performing Python script?
+                                            3. Describe how you've implemented error handling in a recent Python project.
+                                            4. What's your approach to testing Python code?
+                                            5. Tell me about a challenging Python project you worked on.
+                                            """
+                                        elif "javascript" in skills or "react" in skills or "angular" in skills or "vue" in skills:
+                                            questions = """
+                                            1. Explain closure in JavaScript and provide a practical example.
+                                            2. How do you handle state management in complex front-end applications?
+                                            3. Describe your experience with asynchronous programming.
+                                            4. What's your approach to optimizing web performance?
+                                            5. Tell me about a challenging front-end issue you solved recently.
+                                            """
+                                        else:
+                                            questions = """
+                                            1. Describe your approach to learning new technologies quickly.
+                                            2. How do you ensure code quality in your projects?
+                                            3. Tell me about a challenging technical problem you solved recently.
+                                            4. How do you handle tight deadlines while maintaining code quality?
+                                            5. What's your experience with collaboration tools and processes?
+                                            """
+                                except Exception as e:
+                                    print(f"Error generating questions: {str(e)}")
+                                    # Fallback questions if API fails
+                                    questions = """
+                                    1. Tell me about your experience with the technologies you've mentioned.
+                                    2. How do you approach learning new technologies or frameworks?
+                                    3. Describe a challenging project you worked on recently.
+                                    4. How do you ensure code quality in your work?
+                                    5. What's your preferred development methodology and why?
+                                    """
+                                
                                 st.session_state.chat_history.append({"role": "assistant", "content": questions})
                                 st.session_state.questions_generated = True
                     else:

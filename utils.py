@@ -65,18 +65,41 @@ def get_full_response(prompt):
         return "I'm unable to respond at the moment. Please ensure the API key is configured correctly."
     
     try:
+        # Print debug information
+        print(f"Attempting to use Groq API with key: {api_key[:4]}...{api_key[-4:] if len(api_key) > 8 else ''}") 
+        
+        # Initialize Groq client
         client = Groq(api_key=api_key)
         
         # Call Groq API
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",  # Use Llama 3 model
-            messages=[
-                {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=300,  # Reduced token count for shorter responses
-        )
+        print("Creating chat completion with Groq API...")
+        
+        # Try different models in case one isn't available
+        try:
+            response = client.chat.completions.create(
+                model="llama3-70b-8192",  # Try Llama 3 model first
+                messages=[
+                    {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=300,  # Reduced token count for shorter responses
+            )
+        except Exception as model_error:
+            print(f"Error with llama3-70b-8192: {str(model_error)}")
+            print("Trying fallback model...")
+            # Use a different model as backup
+            response = client.chat.completions.create(
+                model="mixtral-8x7b-32768",  # Fallback model
+                messages=[
+                    {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=300,  # Reduced token count for shorter responses
+            )
+        
+        print("Successfully received response from Groq API")
         
         # Format response to ensure it fits within screen
         content = response.choices[0].message.content
@@ -91,8 +114,18 @@ def get_full_response(prompt):
         formatted_content = " ".join(words)
         return formatted_content
     except Exception as e:
-        # Handle API errors
-        return "I'm having trouble connecting. Please try again in a moment."
+        # Handle API errors with more detailed error message
+        error_msg = str(e)
+        print(f"Error connecting to Groq API: {error_msg}")
+        
+        if "authentication" in error_msg.lower() or "api key" in error_msg.lower() or "unauthorized" in error_msg.lower():
+            return "Authentication error: The API key appears to be invalid or expired. Please check your Groq API key."
+        elif "model" in error_msg.lower():
+            return "Model error: The selected model may be unavailable. Please try again later."
+        elif "request" in error_msg.lower() or "timeout" in error_msg.lower():
+            return "Connection error: Unable to reach the Groq API. Please check your internet connection."
+        else:
+            return f"Error: {error_msg[:100]}... Please try again or contact support."
 
 def export_chat_history_to_csv(chat_history, candidate_info):
     """Export the chat history to CSV format."""
