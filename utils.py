@@ -1,45 +1,62 @@
-import re
+"""
+Utility functions for TalentScout AI Hiring Assistant
+"""
+
 import os
-import json
+import re
+import random
+import logging
 import base64
-import csv
-import requests
-from io import StringIO
+import json
 from datetime import datetime
-from groq import Groq
+from typing import Tuple, List, Dict, Any
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def validate_input(field, value):
     """Validate user input based on field type."""
-    if not value.strip():
-        return False, "This field cannot be empty. Please provide a valid response."
+    if not value:
+        return False, f"Please provide a valid {field}."
     
+    # Email validation
     if field == "email":
-        email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, value):
-            return False, "Please enter a valid email address (example: name@domain.com)."
+            return False, "Please provide a valid email address (e.g., name@example.com)."
+        return True, value
     
+    # Phone validation
     elif field == "phone":
-        # Simplified phone validation - accepts digits, spaces, dashes, and parentheses
-        phone_pattern = r'^[\d\s\(\)\-\+]{7,20}$'
-        if not re.match(phone_pattern, value):
-            return False, "Please enter a valid phone number."
+        # Remove non-digit characters for validation
+        digits = re.sub(r'\D', '', value)
+        if len(digits) < 7 or len(digits) > 15:
+            return False, "Please provide a valid phone number (e.g., 123-456-7890)."
+        return True, value
     
+    # Experience validation (should be a number)
     elif field == "experience":
         try:
-            exp = float(value.replace('years', '').replace('year', '').strip())
-            if exp < 0 or exp > 50:
-                return False, "Please enter a realistic value for your years of experience."
-        except:
-            return False, "Please enter your experience in years (e.g., '5' or '5 years')."
+            # Try to extract a number
+            numeric_value = re.sub(r'[^\d\.]', '', value)
+            experience = float(numeric_value)
+            if experience < 0 or experience > 100:
+                return False, "Please provide a valid number of years of experience."
+            return True, str(experience)
+        except ValueError:
+            return False, "Please provide a valid number for your years of experience."
     
-    return True, "Valid input"
+    # For other fields, just return the value
+    return True, value
 
 def format_chat_history(messages):
     """Format chat history for prompt context."""
     formatted = ""
     for msg in messages:
         speaker = "User" if msg["role"] == "user" else "Assistant"
-        formatted += f"{speaker}: {msg['content']}\n\n"
+        content = msg["content"]
+        formatted += f"{speaker}: {content}\n\n"
     return formatted
 
 def get_full_response(prompt):
@@ -48,143 +65,67 @@ def get_full_response(prompt):
     For assessment purposes only: In a production environment, you would never want to
     expose implementation details in comments and would handle API issues more elegantly.
     """
-    # Get API key from environment variables or Streamlit secrets if deployed
-    api_key = None
-    
-    # Try to get from environment variables first
-    api_key = os.environ.get("GROQ_API_KEY")
-    
-    # If not found and in Streamlit Cloud environment, try to get from st.secrets
-    if not api_key:
-        try:
-            import streamlit as st
-            if hasattr(st, 'secrets') and 'GROQ_API_KEY' in st.secrets:
-                api_key = st.secrets["GROQ_API_KEY"]
-        except Exception as e:
-            print(f"Error accessing Streamlit secrets: {str(e)}")
-    
-    # Check if API key exists - if not, provide a meaningful static response
-    if not api_key:
-        print("ASSESSMENT MODE: API key not found. Using static fallback responses.")
-        
-        # Special handling for different prompt types based on content
-        if "generate 5 professional interview questions" in prompt.lower():
-            return """
-Question 1: Tell me about a challenging project you've worked on and how you approached it.
-Question 2: How do you stay updated with the latest developments in your field?
-Question 3: Describe a situation where you had to learn a new technology quickly.
-Question 4: How do you approach debugging a complex issue?
-Question 5: What's your experience with collaborative development and version control?
-            """
-        elif "technical questions" in prompt.lower():
-            return """
-I'll ask you some technical questions based on your background:
-
-1. How do you approach learning new technologies when starting a project?
-2. Tell me about a challenging technical problem you solved recently.
-3. How do you ensure code quality in your projects?
-4. Describe your experience with collaborative development.
-5. What development methodologies are you familiar with?
-            """
-        else:
-            # General response for other prompts
-            return "I understand your question. As this is an assessment version without API access, I'm providing a simulated response. In the full version, you would receive a personalized AI-generated response here."
+    import os
+    import time
+    import groq
     
     try:
-        # Print debug information - Note: for assessment purposes only
-        print(f"ASSESSMENT NOTE: Attempting to use Groq API with key starting with: {api_key[:4]}...") 
+        # Try to use Groq API
+        client = groq.Client(api_key=os.environ.get("GROQ_API_KEY", ""))
         
-        # Initialize Groq client
-        client = Groq(api_key=api_key)
+        # Add system role for better context
+        system_prompt = """You are TalentScout AI, a professional hiring assistant. 
+        Your goal is to help screen candidates by gathering information and assessing fit.
+        Keep your responses concise, professional, and focused on the candidate's qualifications.
+        Be friendly but maintain a professional tone suitable for a hiring context.
+        Format responses clearly and avoid technical jargon unless discussing technical topics.
+        If you don't know something, acknowledge it rather than making up information."""
         
-        # Call Groq API
-        print("Creating chat completion with Groq API...")
+        completion = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
         
-        # Try different models in case one isn't available
-        try:
-            response = client.chat.completions.create(
-                model="llama3-70b-8192",  # Try Llama 3 model first
-                messages=[
-                    {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=300,  # Reduced token count for shorter responses
-            )
-        except Exception as model_error:
-            print(f"Error with llama3-70b-8192: {str(model_error)}")
-            print("Trying fallback model...")
-            # Use a different model as backup
-            response = client.chat.completions.create(
-                model="mixtral-8x7b-32768",  # Fallback model
-                messages=[
-                    {"role": "system", "content": "You are TalentScout AI, a professional AI hiring assistant designed to help with candidate screening. Keep responses concise under 40 words. Be direct, clear, and professional. Use simple sentences and avoid lengthy explanations."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=300,  # Reduced token count for shorter responses
-            )
+        return completion.choices[0].message.content
         
-        print("Successfully received response from Groq API")
-        
-        # Format response to ensure it fits within screen
-        content = response.choices[0].message.content
-        
-        # Break very long words if necessary (over 40 chars)
-        words = content.split()
-        for i, word in enumerate(words):
-            if len(word) > 40:
-                # Insert a zero-width space every 40 characters for long words
-                words[i] = "".join([word[j:j+40] + "\u200B" for j in range(0, len(word), 40)])
-        
-        formatted_content = " ".join(words)
-        return formatted_content
     except Exception as e:
-        # Handle API errors with more detailed error message and fallbacks
-        error_msg = str(e)
-        print(f"ASSESSMENT MODE - Error connecting to Groq API: {error_msg}")
+        logger.error(f"Error getting response from Groq: {str(e)}")
         
-        # Special handling for different prompt types
-        if "generate 5 professional interview questions" in prompt.lower():
-            print("Using fallback interview questions generator")
-            return """
-Question 1: Tell me about a challenging project you've worked on and how you approached it.
-Question 2: How do you stay updated with the latest developments in your field?
-Question 3: Describe a situation where you had to learn a new technology quickly.
-Question 4: How do you approach debugging a complex issue?
-Question 5: What's your experience with collaborative development and version control?
-            """
-        elif "technical questions" in prompt.lower():
-            print("Using fallback technical questions")
-            return """
-I'll ask you some technical questions based on your background:
-
-1. How do you approach learning new technologies when starting a project?
-2. Tell me about a challenging technical problem you solved recently.
-3. How do you ensure code quality in your projects?
-4. Describe your experience with collaborative development.
-5. What development methodologies are you familiar with?
-            """
-        elif "authentication" in error_msg.lower() or "api key" in error_msg.lower() or "unauthorized" in error_msg.lower():
-            return "Note: This is an assessment version. The API key appears to be invalid or expired. The application is using static responses for demonstration purposes."
-        elif "model" in error_msg.lower():
-            return "Note: This is an assessment version. The selected AI model may be unavailable. The application is using static responses for demonstration purposes."
-        elif "request" in error_msg.lower() or "timeout" in error_msg.lower():
-            return "Note: This is an assessment version. There seems to be a connection issue. The application is using static responses for demonstration purposes."
-        else:
-            return "Note: This is an assessment version running with static responses. In the full version, you would receive a personalized AI-generated response here."
+        # Fallback responses if API is unavailable
+        fallbacks = [
+            "Thank you for sharing that information. Could you tell me more about your technical background?",
+            "I appreciate your response. Let's continue our conversation about your qualifications.",
+            "Thank you for providing those details. Could you elaborate on your experience with relevant technologies?",
+            "That's helpful information. Could you share more about your previous roles and responsibilities?",
+            "Thank you for your response. What specific skills or achievements would you highlight for this position?"
+        ]
+        
+        return random.choice(fallbacks)
 
 def export_chat_history_to_csv(chat_history, candidate_info):
     """Export the chat history to CSV format."""
-    # Create a StringIO object to store CSV data
+    from io import StringIO
+    import csv
+    
     csv_string = StringIO()
     writer = csv.writer(csv_string)
+    
+    # Add header information
+    writer.writerow(['TalentScout AI Interview Export (CSV)'])
+    writer.writerow(['Generated:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+    writer.writerow([])
     
     # Write the header
     writer.writerow(['Time', 'Role', 'Content'])
     
     # Write the candidate info as the first entry
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
     candidate_summary = f"Candidate: {candidate_info.get('name', 'N/A')}\n"
     candidate_summary += f"Email: {candidate_info.get('email', 'N/A')}\n"
     candidate_summary += f"Phone: {candidate_info.get('phone', 'N/A')}\n"
@@ -208,7 +149,7 @@ def export_chat_history_to_csv(chat_history, candidate_info):
     
     # Create a download link
     filename = f"talentscout_interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    href = f'<a download="{filename}" href="data:text/csv;base64,{b64}" class="download-button">Download Interview (CSV)</a>'
+    href = f'<a href="data:text/csv;base64,{b64}" download="{filename}" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; margin-top: 10px;">Download Interview (CSV)</a>'
     
     return href
 
@@ -241,7 +182,7 @@ def export_chat_history_to_txt(chat_history, candidate_info):
     
     # Create a download link
     filename = f"talentscout_interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    href = f'<a download="{filename}" href="data:text/plain;base64,{b64}" class="download-button">Download Interview (Text)</a>'
+    href = f'<a href="data:text/plain;base64,{b64}" download="{filename}" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; margin-top: 10px;">Download Interview (Text)</a>'
     
     return href
 
@@ -281,87 +222,78 @@ def calculate_role_match(skills, experience, position):
     - score: Integer between 0-100 representing match percentage
     - key_match_skills: List of skills that are relevant to position
     """
-    # Convert skills to lowercase for easier matching
-    skills_lower = skills.lower()
+    # Parse skills list
+    skill_list = [s.strip().lower() for s in re.split(r'[,;\s]+', skills) if s.strip()]
+    
+    # Define skill relevance to common roles
+    role_skills = {
+        "frontend": ["javascript", "typescript", "react", "vue", "angular", "html", "css", "responsive", "ui/ux"],
+        "backend": ["java", "python", "c#", "node.js", "php", "go", "rust", "sql", "nosql", "api"],
+        "fullstack": ["javascript", "python", "java", "node.js", "react", "angular", "vue", "sql", "nosql"],
+        "devops": ["docker", "kubernetes", "jenkins", "github actions", "aws", "azure", "gcp", "linux", "ci/cd"],
+        "data": ["python", "r", "sql", "nosql", "pandas", "hadoop", "spark", "etl", "tableau", "power bi"],
+        "mobile": ["android", "ios", "swift", "kotlin", "react native", "flutter"],
+        "machine learning": ["python", "tensorflow", "pytorch", "scikit-learn", "nlp", "computer vision"]
+    }
+    
+    # Match position to role
     position_lower = position.lower()
+    matched_role = None
+    max_match = 0
     
-    # Extract individual skills from the comma/space-separated list
-    skill_list = [skill.strip() for skill in skills_lower.replace(',', ' ').split() if skill.strip()]
+    for role, keywords in role_skills.items():
+        match_score = 0
+        for keyword in keywords:
+            if keyword in position_lower:
+                match_score += 1
+        
+        if match_score > max_match:
+            max_match = match_score
+            matched_role = role
     
-    # Get years of experience as a number
+    # If no role matched, default to a generic role
+    if not matched_role:
+        # Default to fullstack as a broad general role
+        matched_role = "fullstack"
+    
+    # Find matching skills
+    relevant_skills = role_skills[matched_role]
+    matching_skills = []
+    
+    for skill in skill_list:
+        if skill in relevant_skills:
+            matching_skills.append(skill)
+    
+    # Calculate match score
+    if not skill_list:
+        return 50, matching_skills  # Default score
+    
+    # Base match on % of skills that match the role
+    match_percentage = len(matching_skills) / len(relevant_skills) * 100
+    
+    # Adjust based on experience (more experience = higher score)
     try:
-        years_exp = float(experience.replace('years', '').replace('year', '').strip())
-    except (ValueError, AttributeError):
-        # Default to 1 year if parsing fails
-        years_exp = 1
+        exp_value = float(re.sub(r'[^\d\.]', '', str(experience)))
+        
+        # Adjust for experience
+        if exp_value < 2:
+            experience_factor = 0.85  # Junior
+        elif exp_value < 5:
+            experience_factor = 1.0  # Mid-level
+        else:
+            experience_factor = 1.15  # Senior
+            
+        # Apply experience factor
+        match_percentage = match_percentage * experience_factor
+        
+    except (ValueError, TypeError):
+        # If experience can't be parsed, don't adjust
+        pass
     
-    # Define position-specific relevant skills (simplified for demo)
-    position_skills = {
-        "developer": ["python", "javascript", "typescript", "react", "node", "angular", "vue", "java", "c#", "php", "html", "css", "golang"],
-        "frontend": ["javascript", "typescript", "react", "angular", "vue", "html", "css", "sass", "webpack", "ui/ux"],
-        "backend": ["python", "java", "c#", "nodejs", "php", "golang", "ruby", "sql", "mongodb", "api"],
-        "fullstack": ["javascript", "typescript", "python", "java", "html", "css", "react", "angular", "nodejs", "express"],
-        "data": ["python", "r", "sql", "hadoop", "spark", "tableau", "excel", "statistics", "machine learning", "data"],
-        "devops": ["docker", "kubernetes", "aws", "azure", "gcp", "terraform", "jenkins", "ci/cd", "linux", "bash"],
-        "mobile": ["swift", "kotlin", "react native", "flutter", "android", "ios", "mobile"],
-        "qa": ["selenium", "testing", "automation", "junit", "jest", "cypress", "test", "qa"],
-    }
+    # Ensure score is between 20-100
+    score = max(20, min(100, int(match_percentage)))
     
-    # Find which category best matches the position
-    best_match_category = None
-    for category in position_skills:
-        if category in position_lower:
-            best_match_category = category
-            break
-    
-    # If no specific category found, use generic developer skills
-    if not best_match_category:
-        best_match_category = "developer"
-    
-    # Get the relevant skills for this position
-    relevant_skills = position_skills[best_match_category]
-    
-    # Count how many skills match
-    matching_skills = [skill for skill in skill_list if any(relevant in skill for relevant in relevant_skills)]
-    key_match_skills = list(set(matching_skills))  # Remove duplicates
-    
-    # Calculate skill match percentage (max 70%)
-    if len(relevant_skills) > 0:
-        skill_match = min(70, (len(key_match_skills) / len(relevant_skills)) * 100)
-    else:
-        skill_match = 35  # Default value
-    
-    # Calculate experience match (max 30%)
-    # Assume positions need different experience levels
-    position_exp_requirements = {
-        "junior": 1,
-        "entry": 0,
-        "mid": 3,
-        "senior": 5,
-        "lead": 7,
-        "manager": 5,
-        "director": 8,
-        "architect": 8,
-    }
-    
-    # Determine target experience based on position
-    target_exp = 3  # Default mid-level requirement
-    for level, exp in position_exp_requirements.items():
-        if level in position_lower:
-            target_exp = exp
-            break
-    
-    # Calculate experience score
-    if years_exp >= target_exp:
-        exp_match = 30  # Full experience points
-    else:
-        # Partial experience points based on ratio
-        exp_match = (years_exp / target_exp) * 30
-    
-    # Calculate total score (0-100)
-    total_score = int(min(100, skill_match + exp_match))
-    
-    return total_score, key_match_skills
+    return score, matching_skills
 
 def generate_custom_interview_questions(skills, experience_level, position):
     """Generate custom interview questions based on candidate skills.
@@ -369,116 +301,83 @@ def generate_custom_interview_questions(skills, experience_level, position):
     For assessment purposes, includes comprehensive fallback mechanisms
     if the API is unavailable or returns errors.
     """
-    print(f"Generating custom questions for: {position} with {experience_level} years experience in {skills}")
+    import os
+    import groq
     
-    # Prepare the prompt for the AI to generate questions
-    prompt = f"""
-    Generate 5 professional interview questions for a {position} candidate with {experience_level} years of experience who has the following skills: {skills}.
+    # Parse skills
+    skill_list = [s.strip() for s in re.split(r'[,;\s]+', skills) if s.strip()]
     
-    The questions should:
-    1. Be challenging but appropriate for their experience level
-    2. Include at least one behavioral question related to their skills
-    3. Include at least one technical question specific to their technology stack
-    4. Include at least one question about problem-solving in their domain
-    5. Be concise and clear
-    
-    Format each question as a numbered list item, starting with "Question 1:" etc.
-    Do not include answers to the questions. Just list the 5 questions.
-    """
+    # Determine experience level
+    try:
+        years = float(re.sub(r'[^\d\.]', '', experience_level))
+        if years < 2:
+            level_description = "beginner (0-2 years)"
+        elif years < 5:
+            level_description = "intermediate (2-5 years)"
+        else:
+            level_description = "advanced (5+ years)"
+    except (ValueError, TypeError):
+        level_description = "intermediate"
     
     try:
-        return get_full_response(prompt)
+        # Try to use Groq API
+        client = groq.Client(api_key=os.environ.get("GROQ_API_KEY", ""))
+        
+        prompt = f"""Generate a set of 3-5 custom technical interview questions for a {position} candidate 
+with {level_description} experience level. The candidate has listed the following skills: {', '.join(skill_list)}.
+
+The questions should:
+1. Focus on the most relevant skills for the {position} position
+2. Be appropriate for someone with {level_description} experience
+3. Include a mix of technical knowledge and problem-solving questions
+4. Be specific and detailed rather than generic
+5. Be formatted as markdown with clear section headings
+
+Format your response with:
+1. A title section
+2. A brief intro explaining the question set
+3. Numbered questions with clear headings indicating the skill being tested
+4. A closing interviewer note section with 2-3 tips for evaluating the responses
+"""
+        
+        completion = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=800
+        )
+        
+        return completion.choices[0].message.content
+        
     except Exception as e:
-        print(f"Error in custom questions generation: {str(e)}")
+        logger.error(f"Error generating interview questions: {str(e)}")
         
-        # Fallback options based on position type
-        position_lower = position.lower()
-        skills_lower = skills.lower()
+        # Create fallback questions if API is unavailable
+        fallback_questions = f"""
+## Technical Interview Questions for {position}
+
+Based on the candidate's profile (experience: {experience_level}, position: {position}), here are customized technical questions:
+
+### 1. General Experience
+Can you describe your most challenging project related to {position} and how you approached it?
+
+### 2. Problem Solving
+What strategies do you use when debugging complex issues in your code or systems?
+
+### 3. Technical Knowledge
+"""
         
-        # For assessment purpose - tailored fallback responses based on position
-        if "developer" in position_lower or "engineer" in position_lower:
-            if "python" in skills_lower:
-                return """
-Question 1: Describe a challenging Python project you worked on and how you solved the technical obstacles.
-
-Question 2: How do you approach optimizing the performance of a slow Python application?
-
-Question 3: Explain your experience with Python's asynchronous programming features like asyncio.
-
-Question 4: How do you ensure your Python code is maintainable and follows best practices?
-
-Question 5: Tell me about a time when you had to learn a new Python library or framework quickly to meet a deadline.
-                """
-            elif "javascript" in skills_lower or "react" in skills_lower or "angular" in skills_lower:
-                return """
-Question 1: Describe a complex front-end application you built and the architecture decisions you made.
-
-Question 2: How do you approach state management in large React/Angular applications?
-
-Question 3: Explain your experience with modern JavaScript features and how you use them.
-
-Question 4: Tell me about a time when you had to optimize a slow-performing front-end application.
-
-Question 5: How do you approach testing JavaScript applications?
-                """
-            elif "java" in skills_lower or "spring" in skills_lower:
-                return """
-Question 1: Describe your experience with Java's memory management and garbage collection.
-
-Question 2: How have you used design patterns in your Java projects?
-
-Question 3: Tell me about a challenging multithreading issue you encountered and how you resolved it.
-
-Question 4: Explain your approach to testing Java applications.
-
-Question 5: Describe a situation where you had to improve the performance of a Java application.
-                """
-            else:
-                return """
-Question 1: Tell me about the most complex technical problem you've solved recently.
-
-Question 2: How do you approach learning new technologies and frameworks?
-
-Question 3: Describe your experience with code reviews and ensuring code quality.
-
-Question 4: How do you handle technical disagreements within a team?
-
-Question 5: Explain your debugging process when facing an unfamiliar issue.
-                """
-        elif "data" in position_lower or "analyst" in position_lower or "scientist" in position_lower:
-            return """
-Question 1: Describe a data project where you had to clean and prepare messy data for analysis.
-
-Question 2: How do you validate your data analysis findings and ensure accuracy?
-
-Question 3: Tell me about a time when your data analysis led to a significant business decision.
-
-Question 4: What statistical methods do you commonly use, and how do you decide which is appropriate?
-
-Question 5: How do you communicate complex data findings to non-technical stakeholders?
-            """
-        elif "manager" in position_lower or "lead" in position_lower:
-            return """
-Question 1: Describe your approach to leading a technical team through a challenging project.
-
-Question 2: How do you handle underperforming team members?
-
-Question 3: Tell me about a situation where you had to manage conflicting priorities.
-
-Question 4: What is your approach to technical decision-making within a team?
-
-Question 5: How do you stay technically relevant while focusing on management responsibilities?
-            """
-        else:
-            # General fallback for any other position
-            return """
-Question 1: Tell me about a challenging project you've worked on and how you approached it.
-
-Question 2: How do you stay updated with the latest developments in your field?
-
-Question 3: Describe a situation where you had to learn a new skill or technology quickly.
-
-Question 4: How do you approach problem-solving when faced with an unfamiliar challenge?
-
-Question 5: Tell me about a time when you had to collaborate with team members from different disciplines.
-            """
+        # Add a skill-specific question for the top skills
+        if skill_list:
+            for i, skill in enumerate(skill_list[:2]):
+                fallback_questions += f"\n### {i+3}. {skill.capitalize()} Experience\n"
+                fallback_questions += f"Could you describe your experience with {skill} and how you've applied it in your work?\n"
+        
+        fallback_questions += """
+### Interviewer Notes
+- Focus on the candidate's problem-solving approach rather than specific syntax
+- Evaluate depth of understanding rather than memorized answers
+- Consider how the candidate's experiences align with your team's needs
+"""
+        
+        return fallback_questions

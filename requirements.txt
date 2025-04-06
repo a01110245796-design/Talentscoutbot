@@ -4,3 +4,6 @@ requests>=2.28.0
 groq
 requests
 streamlit
+cryptography
+pandas
+python-dotenv
