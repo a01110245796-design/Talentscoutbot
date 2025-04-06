@@ -3,6 +3,7 @@ import requests
 import json
 import time
 import os
+import random
 
 # Debug print statements
 print("Starting TalentScout AI Hiring Assistant...")
@@ -14,7 +15,9 @@ from utils import (
     get_full_response, 
     export_chat_history_to_csv, 
     export_chat_history_to_txt,
-    generate_custom_interview_questions
+    generate_custom_interview_questions,
+    calculate_role_match,
+    get_initials
 )
 from styles import apply_custom_styles
 from prompts import (
@@ -35,6 +38,115 @@ st.set_page_config(
 
 # Apply custom styles
 apply_custom_styles()
+
+def display_candidate_profile(candidate_info):
+    """Display a rich candidate profile card with avatar, info, and match score.
+    
+    Parameters:
+    - candidate_info: Dictionary containing candidate information
+    """
+    # Get candidate information
+    name = candidate_info.get('name', 'Candidate')
+    position = candidate_info.get('position', 'Role not specified')
+    experience = candidate_info.get('experience', '0')
+    location = candidate_info.get('location', 'Location not specified')
+    tech_stack = candidate_info.get('tech_stack', '')
+    
+    # Calculate match score and get relevant skills
+    match_score, matching_skills = calculate_role_match(tech_stack, experience, position)
+    
+    # Get candidate initials for avatar
+    initials = get_initials(name)
+    
+    # Create profile card
+    st.markdown("<div class='section-title'>Candidate Profile</div>", unsafe_allow_html=True)
+    st.markdown("<div class='candidate-profile-card'>", unsafe_allow_html=True)
+    
+    # Profile header with picture/initials and name
+    st.markdown(f"""
+    <div class='profile-header'>
+        <div class='profile-picture'>{initials}</div>
+        <div class='profile-info'>
+            <div class='profile-name'>{name}</div>
+            <div class='profile-position'>📌 {position}</div>
+            <div class='profile-location'>📍 {location}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Profile details
+    st.markdown("<div class='profile-details'>", unsafe_allow_html=True)
+    
+    # Experience
+    st.markdown(f"""
+    <div class='detail-row'>
+        <div class='detail-label'>💼 Experience</div>
+        <div class='detail-value'>{experience} years</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Display email and phone if available
+    if candidate_info.get('email'):
+        st.markdown(f"""
+        <div class='detail-row'>
+            <div class='detail-label'>📧 Email</div>
+            <div class='detail-value'>{candidate_info.get('email')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    if candidate_info.get('phone'):
+        st.markdown(f"""
+        <div class='detail-row'>
+            <div class='detail-label'>📱 Phone</div>
+            <div class='detail-value'>{candidate_info.get('phone')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # End profile details
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Skills section - extract skills from tech_stack and display as tags
+    if tech_stack:
+        # Extract individual skills (split by commas, spaces, etc.)
+        skills = [skill.strip() for skill in tech_stack.replace(',', ' ').split() if skill.strip()]
+        
+        # Highlight matching skills
+        st.markdown("<div class='skill-tags'>", unsafe_allow_html=True)
+        for skill in skills:
+            skill_class = "skill-tag match" if skill.lower() in [s.lower() for s in matching_skills] else "skill-tag"
+            st.markdown(f"<span class='{skill_class}'>{skill}</span>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Match score indicator
+    st.markdown(f"""
+    <div class='match-score'>
+        <div class='match-label'>Role Match</div>
+        <div class='match-value'>{match_score}%</div>
+        <div class='match-bar-container'>
+            <div class='match-bar' style='width: {match_score}%;'></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add LinkedIn/GitHub profile links - these are placeholders since we don't collect them
+    st.markdown("""
+    <div class='profile-links'>
+        <a href='#' class='profile-link'>
+            <span class='profile-link-icon'>🔗</span> LinkedIn
+        </a>
+        <a href='#' class='profile-link'>
+            <span class='profile-link-icon'>💻</span> GitHub
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Expandable content section for resume summary with interactive functionality
+    resume_expander = st.expander("Resume Summary")
+    with resume_expander:
+        st.markdown("This is a placeholder for the candidate's resume summary, which would typically include a brief overview of their career, key achievements, and professional goals.")
+    
+    # Close profile card
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # Initialize session state variables
 if "chat_history" not in st.session_state:
@@ -104,6 +216,10 @@ with main_container:
         # Process different stages of conversation
         if st.session_state.conversation_ended:
             st.info("Thank you for completing the initial screening. Our hiring team will review your information and contact you soon!")
+            
+            # Display candidate profile
+            if st.session_state.collection_complete:
+                display_candidate_profile(st.session_state.candidate_info)
             
             # Export options for completed conversations
             export_container = st.container()
@@ -295,7 +411,10 @@ with main_container:
 
 # Footer section with creator's full name
 st.markdown("""
-<div style='position: fixed; bottom: 0; left: 0; width: 100%; background-color: #0e1117; padding: 10px; text-align: center; font-size: 14px; color: #7f7f7f; border-top: 1px solid #2e3440;'>
-    Created by <span style='color: #60a5fa;'>Goddati Bhavyasri</span>
+<div class='footer'>
+    <div class='footer-content'>
+        <span class='footer-text'>Created by</span>
+        <span class='footer-highlight'>Goddati Bhavyasri</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)

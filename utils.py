@@ -245,6 +245,124 @@ def export_chat_history_to_txt(chat_history, candidate_info):
     
     return href
 
+def get_initials(name):
+    """Extract initials from a person's name.
+    
+    Parameters:
+    - name: The person's full name
+    
+    Returns:
+    - initials: 1-2 letters representing the person's initials
+    """
+    if not name or not isinstance(name, str):
+        return "?"
+    
+    # Split the name and get initials (up to 2)
+    parts = name.strip().split()
+    if not parts:
+        return "?"
+    
+    if len(parts) == 1:
+        # Only one name, take the first letter
+        return parts[0][0].upper()
+    else:
+        # Multiple names, take first letter of first and last name
+        return (parts[0][0] + parts[-1][0]).upper()
+
+def calculate_role_match(skills, experience, position):
+    """Calculate a role match score based on candidate skills and experience.
+    
+    Parameters:
+    - skills: String containing candidate's skills
+    - experience: String or numeric value representing years of experience
+    - position: The position they're applying for
+    
+    Returns:
+    - score: Integer between 0-100 representing match percentage
+    - key_match_skills: List of skills that are relevant to position
+    """
+    # Convert skills to lowercase for easier matching
+    skills_lower = skills.lower()
+    position_lower = position.lower()
+    
+    # Extract individual skills from the comma/space-separated list
+    skill_list = [skill.strip() for skill in skills_lower.replace(',', ' ').split() if skill.strip()]
+    
+    # Get years of experience as a number
+    try:
+        years_exp = float(experience.replace('years', '').replace('year', '').strip())
+    except (ValueError, AttributeError):
+        # Default to 1 year if parsing fails
+        years_exp = 1
+    
+    # Define position-specific relevant skills (simplified for demo)
+    position_skills = {
+        "developer": ["python", "javascript", "typescript", "react", "node", "angular", "vue", "java", "c#", "php", "html", "css", "golang"],
+        "frontend": ["javascript", "typescript", "react", "angular", "vue", "html", "css", "sass", "webpack", "ui/ux"],
+        "backend": ["python", "java", "c#", "nodejs", "php", "golang", "ruby", "sql", "mongodb", "api"],
+        "fullstack": ["javascript", "typescript", "python", "java", "html", "css", "react", "angular", "nodejs", "express"],
+        "data": ["python", "r", "sql", "hadoop", "spark", "tableau", "excel", "statistics", "machine learning", "data"],
+        "devops": ["docker", "kubernetes", "aws", "azure", "gcp", "terraform", "jenkins", "ci/cd", "linux", "bash"],
+        "mobile": ["swift", "kotlin", "react native", "flutter", "android", "ios", "mobile"],
+        "qa": ["selenium", "testing", "automation", "junit", "jest", "cypress", "test", "qa"],
+    }
+    
+    # Find which category best matches the position
+    best_match_category = None
+    for category in position_skills:
+        if category in position_lower:
+            best_match_category = category
+            break
+    
+    # If no specific category found, use generic developer skills
+    if not best_match_category:
+        best_match_category = "developer"
+    
+    # Get the relevant skills for this position
+    relevant_skills = position_skills[best_match_category]
+    
+    # Count how many skills match
+    matching_skills = [skill for skill in skill_list if any(relevant in skill for relevant in relevant_skills)]
+    key_match_skills = list(set(matching_skills))  # Remove duplicates
+    
+    # Calculate skill match percentage (max 70%)
+    if len(relevant_skills) > 0:
+        skill_match = min(70, (len(key_match_skills) / len(relevant_skills)) * 100)
+    else:
+        skill_match = 35  # Default value
+    
+    # Calculate experience match (max 30%)
+    # Assume positions need different experience levels
+    position_exp_requirements = {
+        "junior": 1,
+        "entry": 0,
+        "mid": 3,
+        "senior": 5,
+        "lead": 7,
+        "manager": 5,
+        "director": 8,
+        "architect": 8,
+    }
+    
+    # Determine target experience based on position
+    target_exp = 3  # Default mid-level requirement
+    for level, exp in position_exp_requirements.items():
+        if level in position_lower:
+            target_exp = exp
+            break
+    
+    # Calculate experience score
+    if years_exp >= target_exp:
+        exp_match = 30  # Full experience points
+    else:
+        # Partial experience points based on ratio
+        exp_match = (years_exp / target_exp) * 30
+    
+    # Calculate total score (0-100)
+    total_score = int(min(100, skill_match + exp_match))
+    
+    return total_score, key_match_skills
+
 def generate_custom_interview_questions(skills, experience_level, position):
     """Generate custom interview questions based on candidate skills.
     
