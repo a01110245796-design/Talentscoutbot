@@ -7,3 +7,4 @@ streamlit
 cryptography
 pandas
 python-dotenv
+groq
