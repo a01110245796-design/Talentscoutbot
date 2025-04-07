@@ -1,32 +1,20 @@
 # TalentScout AI Hiring Assistant
 
-A professional dark-themed AI-powered hiring assistant chatbot for TalentScout built with Streamlit and Groq LLM API.
+A professional dark-themed AI-powered hiring assistant chatbot designed to streamline recruitment processes with intelligent conversation and a user-friendly interface.
+
+![TalentScout AI](assets/logo.jpg)
 
 ## Features
 
-- AI-powered interview assistant for initial candidate screening
-- Professional dark-themed interface
-- Intelligent conversation handling
-- Data collection from candidates (name, email, experience, etc.)
-- Technical question generation based on candidate skills
-- Export functionality for saving conversation history (CSV and TXT)
-- Custom AI-powered interview questions generator
+- **Professional Dark-Themed UI**: Modern, clean interface designed for recruiters and HR professionals
+- **AI-Powered Conversations**: Groq API integration for intelligent, context-aware responses
+- **GDPR-Compliant**: Privacy notices and secure data handling for candidate information
+- **Candidate Profiling**: Captures essential candidate information with proper validation
+- **Role Match Scoring**: Calculates match percentage between candidate skills and position requirements
+- **Custom Interview Questions**: Generates tailored technical questions based on candidate expertise
+- **Data Export**: Download interview transcripts in both CSV and TXT formats
+- **Responsive Design**: Works on desktop and mobile devices
 
-## Deployment Instructions
-
-### Local Setup
-
-1. Clone this repository
-2. Install the dependencies: `pip install -r requirements.txt`
-3. Set up your Groq API key as an environment variable: `export GROQ_API_KEY=your-api-key`
-4. Run the app: `streamlit run app.py`
-
-### Streamlit Cloud Deployment
-
-1. Create a new app in Streamlit Cloud pointing to this repository
-2. In the Streamlit Cloud settings for your app, add your Groq API key as a secret with the name `GROQ_API_KEY`
-3. Deploy the app
-
-## Created by
+## Created By
 
 Goddati Bhavyasri

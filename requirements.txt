@@ -8,3 +8,11 @@ cryptography
 pandas
 python-dotenv
 groq
+groq
+python-dotenv
+requests
+streamlit
+groq
+python-dotenv
+requests
+streamlit
