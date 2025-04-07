@@ -1,0 +1,76 @@
+
+[     UTC     ] Logs for talentscoutbot-9ivnkahipyhvrayvslvmwa.streamlit.app/
+────────────────────────────────────────────────────────────────────────────────────────
+[11:57:38] 🖥 Provisioning machine...
+[11:57:44] 🎛 Preparing system...
+[11:57:50] ⛓ Spinning up manager process...
+[11:57:55] 🎈 Inflating balloons...
+[11:57:45] 🚀 Starting up repository: 'talentscoutbot', branch: 'main', main module: 'app.py'
+[11:57:45] 🐙 Cloning repository...
+[11:57:46] 🐙 Cloning into '/mount/src/talentscoutbot'...
+
+[11:57:46] 🐙 Cloned repository!
+[11:57:46] 🐙 Pulling code changes from Github...
+[11:57:46] 📦 Processing dependencies...
+Prepared 48 packages in 2.81s
+Installed 48 packages in 123ms
+ + altair==5.5.0
+ + annotated-types==0.7.0
+ + anyio==4.9.0
+ + attrs==25.3.0
+ + blinker==1.9.0
+ + cachetools==5.5.2
+ + certifi==2025.1.31
+ + charset-normalizer==3.4.1
+ + click==8.1.8
+ + distro==1.9.0
+ + gitdb==4.0.12
+ + gitpython==3.1.44
+ + groq==0.22.0
+ + h11==0.14.0
+ + httpcore==1.0.7
+ + httpx==0.28.1
+ + idna==3.10
+ +[2025-04-07 11:57:50.604406]  jinja2==3.1.6
+ + jsonschema==4.23.0
+ + jsonschema-specifications==2024.10.1
+ + markupsafe==3.0.2
+ + narwhals==1.33.0
+ + [2025-04-07 11:57:50.604617] numpy==2.2.4
+ + packaging==24.2
+ + pandas==2.2.3
+ + pillow==11.1.0
+ + protobuf==5.29.4
+ + pyarrow==19.0.1
+ + pydantic==2.11.2
+ + pydantic-core==2.33.1
+ + pydeck==0.9.1
+ + python-dateutil==2.9.0.post0[2025-04-07 11:57:50.604868] 
+ + pytz==2025.2
+ + referencing==0.36.2
+ + requests==2.32.3
+ + rpds-py==0.24.0
+ + six==1.17.0
+ + smmap==5.0.2
+ + sniffio==1.3.1
+ +[2025-04-07 11:57:50.605145]  streamlit==1.44.1
+ + tenacity==9.1.2
+ + toml==0.10.2
+ + tornado==6.4.2
+ + typing-extensions==4.13.1
+ + typing-inspection==0.4.0
+ + tzdata==2025.2
+ + urllib3==2.3.0
+ + watchdog==6.0.0
+[11:57:51] 🐍 Python dependencies were installed from /mount/src/talentscoutbot/uv.lock using uv-sync.
+[11:57:51] 📦 WARN: More than one requirements file detected in the repository. Available options: uv-sync /mount/src/talentscoutbot/uv.lock, uv /mount/src/talentscoutbot/requirements.txt, poetry /mount/src/talentscoutbot/pyproject.toml. Used: uv-sync with /mount/src/talentscoutbot/uv.lock
+Check if streamlit is installed
+Streamlit is already installed
+[11:57:53] 📦 Processed dependencies!
+
+
+
+2025-04-07 11:58:03,615 - INFO - python-dotenv not installed, skipping .env file loading
+2025-04-07 11:58:03,757 - WARNING - GROQ_API_KEY not found in environment variables
+2025-04-07 11:58:04,042 - INFO - python-dotenv not installed, skipping .env file loading
+2025-04-07 11:58:04,047 - WARNING - GROQ_API_KEY not found in environment variables

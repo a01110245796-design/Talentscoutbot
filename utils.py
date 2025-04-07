@@ -476,7 +476,12 @@ def load_dotenv():
 def check_api_credentials():
     """Check if the Groq API key is available in the environment."""
     api_key = os.environ.get("GROQ_API_KEY")
+    
+    # For deployment instructions
     if not api_key:
         logger.warning("GROQ_API_KEY not found in environment variables")
+        logger.info("Remember to set GROQ_API_KEY in your Streamlit Cloud settings during deployment.")
         return False
+        
+    logger.info("GROQ_API_KEY found in environment variables - API is available")
     return True
